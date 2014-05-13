@@ -312,6 +312,35 @@ class Catalog(object):
         if headers.status < 200 or headers.status > 299: raise UploadError(response) 
         return self.get_resource(name, store=store, workspace=workspace)
 
+    def create_db_resource(self, store, name, workspace=None):
+        if isinstance(store, basestring):
+            store = self.get_store(store, workspace=workspace)
+
+        if workspace is not None:
+            workspace_name = _name(workspace)
+            assert store.workspace.name == workspace_name, "Specified store (%s) is not in specified workspace (%s)!" % (store, workspace)
+        else:
+            workspace_name = self.store.workspace.name
+
+        headers = {
+            "Content-type": "text/xml",
+            "Accept": "application/xml"
+        }
+
+        store_name = store.name
+
+        ds_url = url(self.service_url, ['workspaces', workspace_name,
+                                        'datastores', store_name,
+                                        'featuretypes'])
+
+        data = "<featureType><name>%s</name></featureType>" % name
+        headers, response = self.http.request(ds_url, "POST", data, headers)
+
+        self._cache.clear()
+        if headers.status < 200 or headers.status > 299:
+            raise UploadError(response)
+        return self.get_resource(name, store=store, workspace=workspace)
+
     def add_data_to_store(self, store, name, data, workspace=None, overwrite = False, charset = None):
         if isinstance(store, basestring):
             store = self.get_store(store, workspace=workspace)
