@@ -659,19 +659,30 @@ class Catalog(object):
         # TODO: Filter by style
         return lyrs
 
-    def get_layergroup(self, name=None):
+    def get_layergroup(self, name=None, workspace=None):
         try: 
-            group_url = url(self.service_url, ["layergroups", name + ".xml"])
+            path_parts = ["layergroups", name + ".xml"]
+            if workspace is not None:
+                wks_name = _name(workspace)
+                path_parts = ['workspaces', wks_name] + path_parts
+
+            group_url = url(self.service_url, path_parts)
             group = self.get_xml(group_url)
             return LayerGroup(self, group.find("name").text)
         except FailedRequestError:
             return None
 
-    def get_layergroups(self):
-        groups = self.get_xml("%s/layergroups.xml" % self.service_url)
+    def get_layergroups(self, workspace=None):
+        path_parts = ['layergroups.xml']
+        if workspace is not None:
+            wks_name = _name(workspace)
+            path_parts = ['workspaces', wks_name] + path_parts
+
+        groups_url = url(self.service_url, path_parts)
+        groups = self.get_xml(groups_url)
         return [LayerGroup(self, g.find("name").text) for g in groups.findall("layerGroup")]
 
-    def create_layergroup(self, name, layers = (), styles = (), bounds = None):
+    def create_layergroup(self, name, layers = (), styles = (), bounds = None, workspace = None):
         if any(g.name == name for g in self.get_layergroups()):
             raise ConflictingDataError("LayerGroup named %s already exists!" % name)
         else:
