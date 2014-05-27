@@ -681,7 +681,7 @@ class Catalog(object):
 
         groups_url = url(self.service_url, path_parts)
         groups = self.get_xml(groups_url)
-        return [LayerGroup(self, g.find("name").text) for g in groups.findall("layerGroup")]
+        return [LayerGroup(self, g.find("name").text, wks_name) for g in groups.findall("layerGroup")]
 
     def create_layergroup(self, name, layers = (), styles = (), bounds = None, workspace = None):
         if any(g.name == name for g in self.get_layergroups()):
